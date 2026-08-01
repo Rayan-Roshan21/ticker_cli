@@ -12,7 +12,29 @@ type Holding = {
 	changePercent: number;
 };
 
-export default function App() {
+type Position = {
+	symbol: string;
+	shares: number;
+};
+
+type Props = {
+	symbols: string[];
+};
+
+
+// "AAPL" → 1 share. "AAPL:10" → 10 shares.
+function parseArgs(args: string[]): Position[] {
+	return args.map(arg => {
+		const [symbol, shares] = arg.split(':');
+		return {
+			symbol: symbol!.toUpperCase(),
+			shares: shares ? Number(shares) : 1,
+		};
+	});
+}
+
+export default function App({symbols}: Props) {
+	const usingArgs = symbols.length > 0;
 	const [holdings, setHoldings] = useState<Holding[]>([]);
 	const [error, setError] = useState<string | undefined>();
 	const [updatedAt, setUpdatedAt] = useState<Date | undefined>();
@@ -22,8 +44,7 @@ export default function App() {
 
 		const start = async () => {
 			try {
-				const positions = await loadConfig();
-
+				const positions = usingArgs ? parseArgs(symbols) : await loadConfig();
 				const load = async () => {
 					try {
 						const quotes = (await yahooFinance.quote(

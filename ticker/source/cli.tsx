@@ -4,7 +4,8 @@ import {render} from 'ink';
 import meow from 'meow';
 import App from './app.js';
 
-meow(
+
+const cli = meow(
 	`
 	Usage
 	  $ ticker
@@ -26,4 +27,4 @@ meow(
 	},
 );
 
-render(<App />)
+render(<App symbols={cli.input} />);
