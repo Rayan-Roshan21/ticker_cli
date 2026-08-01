@@ -1,16 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
 import YahooFinance from 'yahoo-finance2';
+import {loadConfig} from './config.js';
 
-const yahooFinance = new YahooFinance();
-
-const portfolio = [
-	{symbol: 'VFV.TO', shares: 42},
-	{symbol: 'XIT.TO', shares: 11},
-	{symbol: 'CHPS.TO', shares: 25},
-	{symbol: 'HURA.TO', shares: 60},
-	{symbol: 'ZGLD.TO', shares: 15},
-];
+const yahooFinance = new YahooFinance({suppressNotices: ['yahooSurvey']});
 
 type Holding = {
 	symbol: string;
@@ -24,31 +17,42 @@ export default function App() {
 	const [error, setError] = useState<string | undefined>();
 	const [updatedAt, setUpdatedAt] = useState<Date | undefined>();
 
-
 	useEffect(() => {
-		const load = async () => {
-			try {
-				const quotes = (await yahooFinance.quote(
-					portfolio.map(p => p.symbol),
-				)) as any[];
+		let timer: NodeJS.Timeout;
 
-				setHoldings(
-					portfolio.map((p, i) => ({
-						symbol: p.symbol,
-						shares: p.shares,
-						price: quotes[i]?.regularMarketPrice ?? 0,
-						changePercent: quotes[i]?.regularMarketChangePercent ?? 0,
-					})),
-				);
-				setUpdatedAt(new Date());
-				setError(undefined);
+		const start = async () => {
+			try {
+				const positions = await loadConfig();
+
+				const load = async () => {
+					try {
+						const quotes = (await yahooFinance.quote(
+							positions.map(p => p.symbol),
+						)) as any[];
+
+						setHoldings(
+							positions.map((p, i) => ({
+								symbol: p.symbol,
+								shares: p.shares,
+								price: quotes[i]?.regularMarketPrice ?? 0,
+								changePercent: quotes[i]?.regularMarketChangePercent ?? 0,
+							})),
+						);
+						setUpdatedAt(new Date());
+						setError(undefined);
+					} catch (error_) {
+						setError(String(error_));
+					}
+				};
+
+				await load();
+				timer = setInterval(load, 30_000);
 			} catch (error_) {
-				setError(String(error_));
+				setError(error_ instanceof Error ? error_.message : String(error_));
 			}
 		};
 
-		void load();
-		const timer = setInterval(load, 30_000);
+		void start();
 
 		return () => {
 			clearInterval(timer);
@@ -121,7 +125,7 @@ export default function App() {
 						<Text dimColor>
 							Updated {updatedAt.toLocaleTimeString()} · Ctrl+C to quit
 						</Text>
-						<Text>Data from Yahoo Finance</Text>
+						<Text dimColor>Data from Yahoo Finance</Text>
 					</Box>
 		</Box>
 	)}

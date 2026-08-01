@@ -1,12 +1,16 @@
 {
-	"name": "ticker",
-	"version": "0.0.0",
+	"name": "ticker_cli",
+	"version": "0.1.0",
 	"license": "MIT",
-	"bin": "dist/cli.js",
+	"description": "Building a cli to grab information from Yahoo finance and display them on your terminal.",
+	"repository": "https://github.com/Rayan-Roshan21/ticker_cli",
+	"bin": { "ticker": "dist/cli.js" },
 	"type": "module",
+	"keywords": ["markets", "stocks", "CLI"],
 	"engines": {
-		"node": ">=16"
+		"node": ">=22"
 	},
+	"prepublishOnly": "npm run build",
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch",
