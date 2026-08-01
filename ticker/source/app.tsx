@@ -22,6 +22,8 @@ type Holding = {
 export default function App() {
 	const [holdings, setHoldings] = useState<Holding[]>([]);
 	const [error, setError] = useState<string | undefined>();
+	const [updatedAt, setUpdatedAt] = useState<Date | undefined>();
+
 
 	useEffect(() => {
 		const load = async () => {
@@ -38,12 +40,19 @@ export default function App() {
 						changePercent: quotes[i]?.regularMarketChangePercent ?? 0,
 					})),
 				);
+				setUpdatedAt(new Date());
+				setError(undefined);
 			} catch (error_) {
 				setError(String(error_));
 			}
 		};
 
 		void load();
+		const timer = setInterval(load, 30_000);
+
+		return () => {
+			clearInterval(timer);
+		};
 	}, []);
 
 	if (error) {
@@ -92,6 +101,9 @@ export default function App() {
 							{h.changePercent.toFixed(2)}%
 						</Text>
 					</Box>
+					<Box width={12} justifyContent="flex-end">
+						<Text>{h.shares}</Text>
+					</Box>
 				</Box>
 			))}
 
@@ -103,6 +115,16 @@ export default function App() {
 					<Text bold>{total.toFixed(2)}</Text>
 				</Box>
 			</Box>
+				{updatedAt && (
+		<Box marginTop={1}>
+					<Box flexDirection="column">
+						<Text dimColor>
+							Updated {updatedAt.toLocaleTimeString()} · Ctrl+C to quit
+						</Text>
+						<Text>Data from Yahoo Finance</Text>
+					</Box>
+		</Box>
+	)}
 		</Box>
 	);
 }
