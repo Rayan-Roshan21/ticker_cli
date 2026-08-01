@@ -1,5 +1,16 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
+import YahooFinance from 'yahoo-finance2';
+
+const yahooFinance = new YahooFinance();
+
+const portfolio = [
+	{symbol: 'VFV.TO', shares: 42},
+	{symbol: 'XIT.TO', shares: 11},
+	{symbol: 'CHPS.TO', shares: 25},
+	{symbol: 'HURA.TO', shares: 60},
+	{symbol: 'ZGLD.TO', shares: 15},
+];
 
 type Holding = {
 	symbol: string;
@@ -8,20 +19,44 @@ type Holding = {
 	changePercent: number;
 };
 
-// Fake data for now — real quotes come in step 6.
-const holdings: Holding[] = [
-	{symbol: 'VFV.TO', shares: 42, price: 152.31, changePercent: 0.84},
-	{symbol: 'XIT.TO', shares: 11, price: 78.02, changePercent: -1.12},
-	{symbol: 'CHPS.TO', shares: 25, price: 44.9, changePercent: 2.03},
-	{symbol: 'HURA.TO', shares: 60, price: 18.44, changePercent: -0.35},
-	{symbol: 'ZGLD.TO', shares: 15, price: 31.77, changePercent: 0.12},
-];
-
 export default function App() {
+	const [holdings, setHoldings] = useState<Holding[]>([]);
+	const [error, setError] = useState<string | undefined>();
+
+	useEffect(() => {
+		const load = async () => {
+			try {
+				const quotes = (await yahooFinance.quote(
+					portfolio.map(p => p.symbol),
+				)) as any[];
+
+				setHoldings(
+					portfolio.map((p, i) => ({
+						symbol: p.symbol,
+						shares: p.shares,
+						price: quotes[i]?.regularMarketPrice ?? 0,
+						changePercent: quotes[i]?.regularMarketChangePercent ?? 0,
+					})),
+				);
+			} catch (error_) {
+				setError(String(error_));
+			}
+		};
+
+		void load();
+	}, []);
+
+	if (error) {
+		return <Text color="red">Error: {error}</Text>;
+	}
+
+	if (holdings.length === 0) {
+		return <Text dimColor>Loading…</Text>;
+	}
 	const total = holdings.reduce((sum, h) => sum + h.shares * h.price, 0);
 
 	return (
-		<Box flexDirection="column" padding={2xw}>
+		<Box flexDirection="column" padding={2}>
 			<Box marginBottom={1}>
 				<Box width={10}>
 					<Text bold dimColor>SYMBOL</Text>
@@ -34,6 +69,9 @@ export default function App() {
 				</Box>
 				<Box width={10} justifyContent="flex-end">
 					<Text bold dimColor>CHG</Text>
+				</Box>
+				<Box width={10} justifyContent="flex-end">
+					<Text bold dimColor>SHARES</Text>
 				</Box>
 			</Box>
 
