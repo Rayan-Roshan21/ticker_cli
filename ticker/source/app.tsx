@@ -21,7 +21,7 @@ export default function App() {
 	const total = holdings.reduce((sum, h) => sum + h.shares * h.price, 0);
 
 	return (
-		<Box flexDirection="column" padding={1}>
+		<Box flexDirection="column" padding={2xw}>
 			<Box marginBottom={1}>
 				<Box width={10}>
 					<Text bold dimColor>SYMBOL</Text>
